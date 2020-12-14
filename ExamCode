@@ -1,0 +1,10 @@
+#! /usr/bin/python3
+import subprocess
+
+TaxonomyID="txid5859" #Enter query taxonomy ID in quotes
+Database="" #Database to be searched. Protein,gene or nucleotide
+EsearchOutput="esearch_output"
+GeneName=""
+Protein=""
+ProteinSpecific="[Protein]" #If searching for a protein family, leave string blank. For a specific protein use [Protein]
+subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ") ' | efetch -format fasta > " + EsearchOutput, shell=True)
