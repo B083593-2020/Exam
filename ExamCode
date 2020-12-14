@@ -7,4 +7,10 @@ EsearchOutput="esearch_output"
 GeneName=""
 Protein=""
 ProteinSpecific="[Protein]" #If searching for a protein family, leave string blank. For a specific protein use [Protein]
-subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ") ' | efetch -format fasta > " + EsearchOutput, shell=True)
+if GeneName="*":
+	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + GeneName + "[Gene Name]' | efetch -format fasta > " + EsearchOutput, shell=True
+elif ProteinSpecific="[Protein]":
+	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ")' | efetch -format fasta > " + EsearchOutput, shell=True)
+elif ProteinSpecific=""
+	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ")' | efetch -format fasta > " + EsearchOutput, shell=True)
+
