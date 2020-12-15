@@ -26,12 +26,12 @@ def esearch_command(taxonomyId, database, geneName, protein, proteinSpecific):
 	
 	return esearchCommand
 
-#esearch to form BLAST database
+#esearch to form BLAST database.Note try to narrow search to the hundreds to avoid long waiting times due to file sizes.
 taxonomyID="txid5859" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run. 
 dataBase="Protein" #Database to be searched. Protein, gene or nucleotide
 geneName="" #Enter gene name if required
 protein="" #Enter protein name if required
-roteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
+proteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
 esearchOutput="esearch_output" #Choose output file name
 
 esearchOutput="esearch_output"
@@ -44,9 +44,9 @@ dbtype="prot" #prot for protein and nucl for nucleotide
 subprocess.call("makeblastdb -in " + esearchOutput + " -dbtype " + dbtype + " -out " + blastdbOutput, shell=True) #Blast database created in preparation of BLAST alignment
 print(str("BLAST database succesfully formed")) #Print statement to show blast database has been made.
 
-#esearch for query alignment in BLAST command. Uses function made earlier
+#esearch for query alignment in BLAST command. Uses function made earlier. Note try to narrow search to the hundreds to avoid long waiting times due to filesizes.
 queryDatabase="Protein" #Database to be searched. Protein, gene or nucleotide
-queryTaxonomyID="txid9606" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run.
+queryTaxonomyID="txid7227" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run.
 queryGeneName="COX1" #Enter gene name if required
 queryProtein="" #Enter protein name if required
 queryProteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
@@ -54,7 +54,7 @@ queryEsearchOutput="queryEsearchOutput" #Choose output name
 
 subprocess.call(esearch_command(queryTaxonomyID,queryDatabase,queryGeneName,queryProtein,queryProteinSpecific) + " | efetch -format fasta > " +queryEsearchOutput, shell=True) #Query search asssigned to variable for BLAST alignment.
  
-
+#Variables for BLAST alignment which the user can change. Query search for BLAST alignment is of the organism Drosophila melanogaster and the gene COX1. 
 QueryType="Protein" #DNA or Protein. Nucleotide and Gene fall into the bracket of DNA.
 DatabaseType="Protein" #DNA or Protein. Nucleotide and Gene fall into the bracket of DNA.
 NumAlignments="100" #Set max number of alignments in BLAST alignemnt. Set to 100 by default.
@@ -69,7 +69,8 @@ elif DatabaseType=="Protein" and QueryType=="DNA":
 elif DatabaseType=="Protein" and QueryType=="Protein":
 	blast_command="blastp"
 
-subprocess.call(blast_command + " -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+subprocess.call(blast_command + " -db " + blastdbOutput + " -query " + queryEsearchOutput + " -num_alignments " + NumAlignments + " -outfmt '7' > " + BlastOutput , shell=True)
 
 print(str("BLAST alignment complete"))
+print("Blast output at " + BlastOutput)
 print(str("Script complete"))
