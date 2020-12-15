@@ -1,53 +1,75 @@
 #! /usr/bin/python3
 import subprocess
 
-TaxonomyID="txid5859" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run. 
-Database="Protein" #Database to be searched. Protein, gene or nucleotide
-GeneName=""
-Protein=""
-ProteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
-EsearchOutput="esearch_output"
-
-esearch_command="esearch"
-
-if Database:
-	esearch_command+=" -db " + Database
-
-esearch_command+=" -query '" + TaxonomyID # Assumes TaxonomyID is never empty
-
-if GeneName:
-	esearch_command+=" AND (" + GeneName + "[Gene Name])"
+#Function created for esearch command. Allows user to choose the variable detailed in the brackets for the blast database and query alignment.
+def esearch_command(taxonomyId, database, geneName, protein, proteinSpecific):
 	
-if Protein:
-	esearch_command+=" AND (" + Protein
+	esearchCommand="esearch" #esearch variable set.
+
+	if database:
+        	esearchCommand+=" -db " + database #If database is true then paranter added to esearch variable.
+
+	esearchCommand+=" -query '" + taxonomyId # Assumes TaxonomyID is never empty and adds to esearch variable.
+
+	if geneName:
+        	esearchCommand+=" AND (" + geneName + "[Gene Name])" #If gene name is true then paranter added to esearch variable.
+
+	if protein:
+        	esearchCommand+=" AND (" + protein #If protein is true then paranter added to esearch variable.
+
+        	if proteinSpecific:
+                	esearchCommand+="[Protein]" #If protein is true and is protein specific then paranter added to esearch variable.
+
+        	esearchCommand+=")" #Close query
+
+	esearchCommand+="'" #Close esearch command
 	
-	if ProteinSpecific:
-		esearch_command+="[Protein]"
+	return esearchCommand
 
-	esearch_command+=")"
+#esearch to form BLAST database
+taxonomyID="txid5859" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run. 
+dataBase="Protein" #Database to be searched. Protein, gene or nucleotide
+geneName="" #Enter gene name if required
+protein="" #Enter protein name if required
+roteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
+esearchOutput="esearch_output" #Choose output file name
 
-esearch_command+="'"
+esearchOutput="esearch_output"
+subprocess.call(esearch_command(taxonomyID,dataBase,geneName,protein,proteinSpecific) + " | efetch -format fasta > " + esearchOutput, shell=True) #Run esearch with search results piped into efetch to output search results in fasta format.
 
-subprocess.call(esearch_command + " | efetch -format fasta > " + EsearchOutput, shell=True)
+print(str("esearch complete. FASTA files ready for makeblastdb.")) #Print statement to show esearch and efetch complete.
 
-print(str("Esearch complete. FASTA files ready for makeblastdb."))
+blastdbOutput="blastdb_output" #Choose blast database ouput file name
+dbtype="prot" #prot for protein and nucl for nucleotide
+subprocess.call("makeblastdb -in " + esearchOutput + " -dbtype " + dbtype + " -out " + blastdbOutput, shell=True) #Blast database created in preparation of BLAST alignment
+print(str("BLAST database succesfully formed")) #Print statement to show blast database has been made.
 
-BlastdbOutput="blastdb_output"
-dbtype="prot"
-subprocess.call("makeblastdb -in " + EsearchOutput + " -dbtype " + dbtype + " -out " + BlastdbOutput, shell=True) #Blast database created in preparation of BLAST alignment
+#esearch for query alignment in BLAST command. Uses function made earlier
+queryDatabase="Protein" #Database to be searched. Protein, gene or nucleotide
+queryTaxonomyID="txid9606" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run.
+queryGeneName="COX1" #Enter gene name if required
+queryProtein="" #Enter protein name if required
+queryProteinSpecific=False #If searching for a specific protein then True. Otherwise, False for protein family
+queryEsearchOutput="queryEsearchOutput" #Choose output name
 
-NumAlignments="100"
+subprocess.call(esearch_command(queryTaxonomyID,queryDatabase,queryGeneName,queryProtein,queryProteinSpecific) + " | efetch -format fasta > " +queryEsearchOutput, shell=True) #Query search asssigned to variable for BLAST alignment.
+ 
 
-Query=subprocess.call("esearch -db Protein -query '" + taxonomyID + "[Organism] AND (" + protein + protein_specific + ")' | efetch -format fasta > " + esearch_output, shell=True)
 QueryType="Protein" #DNA or Protein. Nucleotide and Gene fall into the bracket of DNA.
 DatabaseType="Protein" #DNA or Protein. Nucleotide and Gene fall into the bracket of DNA.
-BlastOutput="blast_output"
-if DatabaseType and QueryType=="DNA":
-	subprocess.call("blastn -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
-elif DatabaseType=="DNA" and QueryType=="Protein":
-	subprocess.call("tblastn -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
-elif DatabaseType=="Protein" and QueryType=="DNA":
-	subprocess.call("blastx -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
-elif DatabaseType and QueryType=="Protein":
-	subprocess.call("blastp -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+NumAlignments="100" #Set max number of alignments in BLAST alignemnt. Set to 100 by default.
+BlastOutput="blast_output" #Choose output name
 
+if DatabaseType=="DNA" and QueryType=="DNA":
+	blast_command="blastn"
+elif DatabaseType=="DNA" and QueryType=="Protein":
+	blast_command="tblastn"
+elif DatabaseType=="Protein" and QueryType=="DNA":
+	blast_command="blastx"
+elif DatabaseType=="Protein" and QueryType=="Protein":
+	blast_command="blastp"
+
+subprocess.call(blast_command + " -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+
+print(str("BLAST alignment complete"))
+print(str("Script complete"))
