@@ -1,16 +1,52 @@
 #! /usr/bin/python3
 import subprocess
 
-TaxonomyID="txid5859" #Enter query taxonomy ID in quotes
-Database="" #Database to be searched. Protein,gene or nucleotide
-EsearchOutput="esearch_output"
+TaxonomyID="txid5859" #Enter query taxonomy ID in quotes. Do not leave blank as script will not run. 
+Database="Protein" #Database to be searched. Protein, gene or nucleotide
 GeneName=""
 Protein=""
-ProteinSpecific="[Protein]" #If searching for a protein family, leave string blank. For a specific protein use [Protein]
-if GeneName="*":
-	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + GeneName + "[Gene Name]' | efetch -format fasta > " + EsearchOutput, shell=True
-elif ProteinSpecific="[Protein]":
-	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ")' | efetch -format fasta > " + EsearchOutput, shell=True)
-elif ProteinSpecific=""
-	subprocess.call("esearch -db " + Database + " -query '" + TaxonomyID + "[Organism] AND (" + Protein + ProteinSpecific + ")' | efetch -format fasta > " + EsearchOutput, shell=True)
+ProteinSpecific=True #If searching for a specific protein then True. Otherwise, False for protein family
+EsearchOutput="esearch_output"
+
+esearch_command="esearch"
+
+if Database:
+	esearch_command+=" -db " + Database
+
+esearch_command+=" -query '" + TaxonomyID # Assumes TaxonomyID is never empty
+
+if GeneName:
+	esearch_command+=" AND (" + GeneName + "[Gene Name])"
+	
+if Protein:
+	esearch_command+=" AND (" + Protein
+	
+	if ProteinSpecific:
+		esearch_command+="[Protein]"
+
+	esearch_command+=")"
+
+esearch_command+="'"
+
+subprocess.call(esearch_command + " | efetch -format fasta > " + EsearchOutput, shell=True)
+
+print(str("Esearch complete. FASTA files ready for makeblastdb."))
+
+BlastdbOutput="blastdb_output"
+dbtype="prot"
+subprocess.call("makeblastdb -in " + EsearchOutput + " -dbtype " + dbtype + " -out " + BlastdbOutput, shell=True) #Blast database created in preparation of BLAST alignment
+
+NumAlignments="100"
+
+Query=
+QueryType="" #DNA or Protein
+BlastOutput=""
+if Database and QueryType ="Nucleotide":
+	subprocess.call("blastn -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+elif Database="Nucleotide" and QueryType="Protein":
+	subprocess.call("tblastn -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+elif Database="Protein" and QueryType="Nucleotide":
+	subprocess.call("blastx -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
+elif Database and QueryType="Protein":
+	subprocess.call("blastp -db " + BlastdbOutput + " -query " + Query + " -num_alignments " + NumAlignments + " -outfmt '6 sseqid' > " + BlastOutput , shell=True)
 
